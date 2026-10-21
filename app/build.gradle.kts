@@ -9,17 +9,26 @@ android {
 
     defaultConfig {
         applicationId = "com.example.vrplayer"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("fixed") {
+            storeFile = file("vrplayer.keystore")
+            storePassword = "vrplayer123"
+            keyAlias = "vrplayer"
+            keyPassword = "vrplayer123"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            // подписываем debug-ключом, чтобы APK можно было сразу установить
-            signingConfig = signingConfigs.getByName("debug")
+            // фиксированный ключ: новые версии ставятся поверх старых без потери данных
+            signingConfig = signingConfigs.getByName("fixed")
         }
     }
     compileOptions {

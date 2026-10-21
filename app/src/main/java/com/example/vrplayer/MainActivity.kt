@@ -1,6 +1,7 @@
 package com.example.vrplayer
 
 import android.annotation.SuppressLint
+import java.io.File
 import android.content.Intent
 import android.graphics.Color
 import android.hardware.Sensor
@@ -73,6 +74,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             try { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}
             play(uri)
         }
+    }
+
+    private val vaultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val path = r.data?.getStringExtra("path")
+        if (r.resultCode == RESULT_OK && path != null) play(Uri.fromFile(File(path)), secure = true)
     }
 
     private val ticker = object : Runnable {
@@ -198,6 +204,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             addView(btn("Открыть") { picker.launch(arrayOf("video/*")) })
             addView(playBtn); addView(modeBtn); addView(eyeBtn); addView(gyroBtn); addView(soundBtn)
+            addView(btn("🔒 Сейф") { vaultLauncher.launch(Intent(this@MainActivity, VaultActivity::class.java)) })
             addView(btn("Сброс") { resetView() })
             addView(zoomLabel); addView(zoomBar)
         }
@@ -228,7 +235,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         intent.data?.let { play(it) }
     }
 
-    private fun play(uri: Uri) {
+    private fun play(uri: Uri, secure: Boolean = false) {
+        // для приватных видео запрещаем скриншоты и скрываем превью в «недавних»
+        if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         player.setMediaItem(MediaItem.fromUri(uri))
         player.prepare()
         player.playWhenReady = true
